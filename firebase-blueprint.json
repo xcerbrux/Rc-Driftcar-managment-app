@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Authenticated business staff or administrator user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 1024 },
+        "role": { "type": "string", "enum": ["admin", "staff"], "maxLength": 32 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "products": {
+      "title": "Product",
+      "description": "RC drift car, chassis, motor, ESC, wheel, body shell, or accessory item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 200 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "enum": ["chassis_kit", "rtr_car", "motor_esc", "body_shell", "wheels_tires", "gyro_electronics", "spare_parts", "accessories"], "maxLength": 64 },
+        "brand": { "type": "string", "maxLength": 100 },
+        "scale": { "type": "string", "enum": ["1:10", "1:18", "1:24", "1:28", "other"], "maxLength": 32 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "costPrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "stockQuantity": { "type": "integer" },
+        "minStockAlert": { "type": "integer" },
+        "hasVariants": { "type": "boolean" },
+        "variants": { "type": "array" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "sku", "category", "costPrice", "sellingPrice", "stockQuantity", "isActive"]
+    },
+    "customers": {
+      "title": "Customer",
+      "description": "Customer ordering via Facebook, Instagram, or direct contact",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "socialPlatform": { "type": "string", "enum": ["facebook", "instagram", "tiktok", "direct", "other"], "maxLength": 32 },
+        "socialHandle": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 500 },
+        "city": { "type": "string", "maxLength": 100 },
+        "region": { "type": "string", "maxLength": 100 },
+        "postalCode": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "totalOrders": { "type": "integer" },
+        "totalSpent": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "phone", "socialPlatform", "address"]
+    },
+    "sales": {
+      "title": "Sale Order",
+      "description": "Manual recorded sale of RC drift cars/parts with COD or prepaid status",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 32 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shippingFee": { "type": "number" },
+        "discount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "profit": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cod", "bank_transfer", "e_wallet", "cash"], "maxLength": 32 },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed", "refunded"], "maxLength": 32 },
+        "deliveryStatus": { "type": "string", "enum": ["pending", "packed", "shipped", "delivered", "returned", "cancelled"], "maxLength": 32 },
+        "courier": { "type": "string", "maxLength": 100 },
+        "trackingNumber": { "type": "string", "maxLength": 100 },
+        "codRemitted": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderNumber", "customerId", "customerName", "items", "totalAmount", "totalCost", "profit", "paymentMethod", "paymentStatus", "deliveryStatus"]
+    },
+    "expenses": {
+      "title": "Business Expense",
+      "description": "Operating expenditure such as packing materials, shipping, maintenance, or tools",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "enum": ["packaging", "shipping_subsidy", "marketing_ads", "tools_maintenance", "equipment", "utilities", "supplies", "miscellaneous"], "maxLength": 64 },
+        "amount": { "type": "number" },
+        "expenseDate": { "type": "string", "maxLength": 32 },
+        "paymentMethod": { "type": "string", "enum": ["cash", "bank_transfer", "e_wallet", "credit_card"], "maxLength": 32 },
+        "referenceNo": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "category", "amount", "expenseDate", "paymentMethod"]
+    },
+    "auditLogs": {
+      "title": "Audit / Activity Record",
+      "description": "Traceable system log for critical business state modifications",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "enum": ["sale_created", "sale_updated", "sale_cancelled", "product_created", "product_updated", "inventory_adjusted", "expense_created", "expense_updated", "customer_created"], "maxLength": 64 },
+        "entityType": { "type": "string", "enum": ["sale", "product", "inventory", "expense", "customer", "system"], "maxLength": 32 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "summary": { "type": "string", "maxLength": 500 },
+        "performedByUid": { "type": "string", "maxLength": 128 },
+        "performedByEmail": { "type": "string", "maxLength": 256 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["action", "entityType", "entityId", "summary", "performedByUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/users" },
+      "description": "Staff and administrator profiles"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/products" },
+      "description": "RC drift cars, components, and parts catalog"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/customers" },
+      "description": "Customer contact and ordering address profiles"
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/sales" },
+      "description": "Sale orders, payments, COD tracking, and profit tracking"
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/expenses" },
+      "description": "Operating and inventory maintenance expenditures"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/auditLogs" },
+      "description": "Traceable activity audit trail"
+    }
+  }
+}

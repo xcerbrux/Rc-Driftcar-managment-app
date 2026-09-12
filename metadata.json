@@ -1,0 +1,6 @@
+{
+  "name": "RC Business Manager",
+  "description": "Production management application for online remote-control drift car business operations, inventory, sales, and finances.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

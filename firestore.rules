@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Connectivity test probe
+    match /test/{testId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Users collection: staff profiles
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 256 &&
+             data.role in ['admin', 'staff'];
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && isValidUser(incoming()) &&
+                    incoming().uid == existing().uid &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Products catalog & inventory
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.sku is string && data.sku.size() > 0 && data.sku.size() <= 64 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 64 &&
+             data.costPrice is number && data.costPrice >= 0 &&
+             data.sellingPrice is number && data.sellingPrice >= 0 &&
+             data.stockQuantity is number && data.stockQuantity >= 0 &&
+             data.isActive is bool;
+    }
+
+    match /products/{productId} {
+      allow get: if isSignedIn() && isValidId(productId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(productId) && isValidProduct(incoming());
+      allow update: if isSignedIn() && isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isSignedIn() && isValidId(productId);
+    }
+
+    // Customers directory
+    function isValidCustomer(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 150 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 32 &&
+             data.socialPlatform in ['facebook', 'instagram', 'tiktok', 'direct', 'other'] &&
+             data.address is string && data.address.size() > 0 && data.address.size() <= 500;
+    }
+
+    match /customers/{customerId} {
+      allow get: if isSignedIn() && isValidId(customerId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming());
+      allow update: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming());
+      allow delete: if isSignedIn() && isValidId(customerId);
+    }
+
+    // Sales orders & COD records
+    function isValidSale(data) {
+      return data.orderNumber is string && data.orderNumber.size() > 0 && data.orderNumber.size() <= 64 &&
+             data.customerId is string && data.customerId.size() > 0 && data.customerId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 150 &&
+             data.items is list && data.items.size() > 0 &&
+             data.totalAmount is number &&
+             data.totalCost is number &&
+             data.profit is number &&
+             data.paymentMethod in ['cod', 'bank_transfer', 'e_wallet', 'cash'] &&
+             data.paymentStatus in ['pending', 'paid', 'failed', 'refunded'] &&
+             data.deliveryStatus in ['pending', 'packed', 'shipped', 'delivered', 'returned', 'cancelled'];
+    }
+
+    match /sales/{saleId} {
+      allow get: if isSignedIn() && isValidId(saleId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(saleId) && isValidSale(incoming());
+      allow update: if isSignedIn() && isValidId(saleId) && isValidSale(incoming()) &&
+                    incoming().orderNumber == existing().orderNumber;
+      allow delete: if isSignedIn() && isValidId(saleId);
+    }
+
+    // Operating expenses
+    function isValidExpense(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.category in ['packaging', 'shipping_subsidy', 'marketing_ads', 'tools_maintenance', 'equipment', 'utilities', 'supplies', 'miscellaneous'] &&
+             data.amount is number && data.amount > 0 &&
+             data.expenseDate is string && data.expenseDate.size() > 0 &&
+             data.paymentMethod in ['cash', 'bank_transfer', 'e_wallet', 'credit_card'];
+    }
+
+    match /expenses/{expenseId} {
+      allow get: if isSignedIn() && isValidId(expenseId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming());
+      allow update: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming());
+      allow delete: if isSignedIn() && isValidId(expenseId);
+    }
+
+    // Audit logs (append-only trail)
+    function isValidAuditLog(data) {
+      return data.action is string && data.action.size() > 0 && data.action.size() <= 64 &&
+             data.entityType in ['sale', 'product', 'inventory', 'expense', 'customer', 'system'] &&
+             data.entityId is string && data.entityId.size() > 0 && data.entityId.size() <= 128 &&
+             data.summary is string && data.summary.size() > 0 && data.summary.size() <= 500 &&
+             data.performedByUid is string && data.performedByUid == request.auth.uid;
+    }
+
+    match /auditLogs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(logId) && isValidAuditLog(incoming());
+      // Audit records are immutable
+      allow update, delete: if false;
+    }
+  }
+}
